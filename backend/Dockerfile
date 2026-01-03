@@ -9,6 +9,9 @@ COPY . .
 
 RUN go build -o app cmd/api/main.go
 
-EXPOSE 8080
+# Hugging Face exposes port 7860
+EXPOSE 7860
+
+ENV PORT=7860
 
 CMD ["./app"]
