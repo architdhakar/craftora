@@ -30,6 +30,7 @@ func main() {
 	reviewHandler := handlers.NewReviewHandler(db)
 	aiHandler := handlers.NewAIHandler(db)
 	paymentHandler := handlers.NewPaymentHandler(db)
+	videoCallHandler := handlers.NewVideoCallHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -46,7 +47,7 @@ func main() {
 	mux.HandleFunc("GET /api/orders", middleware.Auth(orderHandler.GetUserOrders))
 	mux.HandleFunc("GET /api/orders/{id}", middleware.Auth(orderHandler.GetOrderDetails))
 	mux.HandleFunc("POST /api/reviews", middleware.Auth(reviewHandler.CreateReview))
-	
+
 	mux.HandleFunc("GET /api/products/{id}/reviews", reviewHandler.GetProductReviews)
 
 	// Protected routes - Artisan
@@ -75,6 +76,12 @@ func main() {
 	mux.HandleFunc("POST /api/orders/with-payment", middleware.Auth(orderHandler.CreateOrderWithPayment))
 	mux.HandleFunc("GET /api/artisan/earnings", middleware.Auth(middleware.ArtisanOnly(paymentHandler.GetArtisanEarnings)))
 	handler := middleware.CORS(mux)
+
+	// Video Call
+	mux.HandleFunc("POST /api/video-call/request", middleware.Auth(videoCallHandler.RequestCall))
+	mux.HandleFunc("GET /api/video-call/pending", middleware.Auth(middleware.ArtisanOnly(videoCallHandler.GetPendingCalls)))
+	mux.HandleFunc("PUT /api/video-call/{id}/accept", middleware.Auth(middleware.ArtisanOnly(videoCallHandler.AcceptCall)))
+	mux.HandleFunc("GET /api/video-call/{id}/status", middleware.Auth(videoCallHandler.GetCallStatus))
 
 	port := os.Getenv("PORT")
 	if port == "" {
