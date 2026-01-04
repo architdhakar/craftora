@@ -60,4 +60,13 @@ export const approveProduct = (id) => api.put(`/admin/products/${id}/approve`)
 export const createCategory = (data) => api.post('/admin/categories', data)
 export const getAnalytics = () => api.get('/admin/analytics')
 
+// Video Call APIs
+export const requestVideoCall = (data) => api.post('/video-call/request', data);
+
+export const getPendingVideoCalls = () => api.get('/video-call/pending');
+
+export const acceptVideoCall = (id) => api.put(`/video-call/${id}/accept`);
+
+export const getVideoCallStatus = (id) => api.get(`/video-call/${id}/status`);
+
 export default api
