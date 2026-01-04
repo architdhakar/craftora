@@ -3,7 +3,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProduct, createOrder, getProductReviews, getConfidenceScore, createReview, getProducts } from '../api/axios'
 import { Star, MapPin, Clock, Award, ShoppingCart, TrendingUp, Package, Heart, Share2, AlertCircle } from 'lucide-react'
-
+import { X, Video, Eye, Camera ,Sparkles} from 'lucide-react'
+import { JitsiMeeting } from '@jitsi/react-sdk';
+import VideoCallModal from '../components/VideoCallModal'
+import ARTryOn from '../components/ARTryOn'
 export default function ProductDetail({ user }) {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -21,6 +24,10 @@ export default function ProductDetail({ user }) {
   const [isLiked, setIsLiked] = useState(false)
   const [canReview, setCanReview] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [showARPreview, setShowARPreview] = useState(false)
+  const [showVideoCall, setShowVideoCall] = useState(false)
+  const [isCallActive, setIsCallActive] = useState(false);
+  const [showARTryOn, setShowARTryOn] = useState(false)
 
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -42,10 +49,10 @@ export default function ProductDetail({ user }) {
   }, [product, user])
 
   const fetchProduct = async () => {
-    
+
     try {
       const response = await getProduct(id)
-      
+
       setProduct(response.data)
     } catch (error) {
       console.error('Failed to fetch product', error)
@@ -406,6 +413,23 @@ export default function ProductDetail({ user }) {
                   </button>
                 )}
               </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setShowARTryOn(true)}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-lg"
+                >
+                  <Sparkles className="inline mr-2" size={20} />
+                  AR Try-On
+                </button>
+                <button
+                  onClick={() => setShowVideoCall(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+                >
+                  <Video size={20} />
+                  <span className="font-medium">Live with Artisan</span>
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
@@ -664,6 +688,121 @@ export default function ProductDetail({ user }) {
           </div>
         </div>
       )}
+      {/* AR Preview Modal - WOW FEATURE #1 */}
+      {showARPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">AR Preview</h2>
+              <button onClick={() => setShowARPreview(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-8 text-center">
+              <Camera size={64} className="mx-auto text-purple-600 mb-4" />
+              <h3 className="text-xl font-bold mb-2">See Product in Your Space!</h3>
+              <p className="text-gray-600 mb-4">
+                Use your phone camera to visualize how this {product.name} looks in your home
+              </p>
+
+              <div className="bg-white rounded-lg p-6 mb-4">
+                <img src={images[0]} alt="AR Preview" className="w-full h-64 object-contain mb-4" />
+                <p className="text-sm text-gray-600">
+                  📱 Scan QR code with your phone to launch AR view
+                </p>
+                <div className="mt-4 w-32 h-32 mx-auto bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-xs text-gray-500">QR Code</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700">
+                  Open AR Camera
+                </button>
+                <button
+                  onClick={() => setShowARPreview(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Video Call Modal - WOW FEATURE #2 */}
+      {showVideoCall && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-4xl w-full h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Live with Artisan</h2>
+              <button onClick={() => { setShowVideoCall(false); setIsCallActive(false) }} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 bg-gray-100 rounded-xl overflow-hidden relative">
+              {!isCallActive ? (
+                /* STATE 1: PRE-CALL SUMMARY (Your existing UI) */
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Video size={64} className="text-blue-600 mb-4" />
+                  <h3 className="text-xl font-bold mb-2">Ready to connect?</h3>
+                  <p className="text-gray-600 mb-8">You are about to start a live video session.</p>
+                  <button
+                    onClick={() => setIsCallActive(true)}
+                    className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+                  >
+                    Start Call Now
+                  </button>
+                </div>
+              ) : (
+                /* STATE 2: THE ACTUAL VIDEO CALL */
+                <JitsiMeeting
+                  roomName={`Artisan-Call-${product.id}-${product.artisan.id}`} // Unique Room Name
+                  configOverwrite={{
+                    startWithAudioMuted: true,
+                    disableThirdPartyRequests: true,
+                    prejoinPageEnabled: false,
+                  }}
+                  interfaceConfigOverwrite={{
+                    // Customize the toolbar to hide confusing buttons
+                    TOOLBAR_BUTTONS: [
+                      'microphone', 'camera', 'closedcaptions', 'desktop',
+                      'fullscreen', 'fodeviceselection', 'hangup',
+                      'profile', 'chat', 'settings', 'raisehand',
+                      'videoquality', 'filmstrip', 'tileview'
+                    ],
+                  }}
+                  userInfo={{
+                    displayName: 'Customer' // Or the logged-in user's name
+                  }}
+                  onApiReady={(externalApi) => {
+                    // You can attach event listeners here
+                  }}
+                  getIFrameRef={(iframeRef) => { iframeRef.style.height = '100%'; }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      <VideoCallModal
+        show={showVideoCall}
+        onClose={() => setShowVideoCall(false)}
+        product={product}
+        artisan={product.artisan}
+        user={user}
+      />
+      <ARTryOn
+        show={showARTryOn}
+        onClose={() => setShowARTryOn(false)}
+        product={product}
+      />
     </div>
+
   )
 }
+
+
