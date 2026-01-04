@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-
-	_ "github.com/lib/pq"
 )
 
 func InitDB() (*sql.DB, error) {
@@ -17,12 +16,12 @@ func InitDB() (*sql.DB, error) {
 		fmt.Println("No .env file found")
 	}
 	dbURL := os.Getenv("DATABASE_URL")
-	//dbURL := "postgresql://neondb_owner:npg_Pgnv7GWyeKs9@ep-sparkling-cake-a1pd5691-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
-	db, err := sql.Open("postgres", dbURL)
+	db, err := sql.Open("pgx", dbURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -137,6 +136,15 @@ func CreateTables(db *sql.DB) error {
 	transaction_id VARCHAR(255),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
+	CREATE TABLE IF NOT EXISTS video_call_requests (
+	id SERIAL PRIMARY KEY,
+	buyer_id INTEGER REFERENCES users(id),
+	artisan_id INTEGER REFERENCES artisans(id),
+	product_id INTEGER REFERENCES products(id),
+	room_name VARCHAR(255) NOT NULL,
+	status VARCHAR(50) DEFAULT 'pending',
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
 
